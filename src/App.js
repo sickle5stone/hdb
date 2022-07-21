@@ -11,7 +11,7 @@ import Paper from "@mui/material/Paper";
 import axios from "axios";
 import { Autocomplete, MenuItem, Select, TextField } from "@mui/material";
 import { areas, street } from "./constants/utils";
-import _, { update } from "lodash";
+import _, { debounce, update } from "lodash";
 
 const getData = async (area, limit) => {
   const data = await axios.get(
@@ -111,6 +111,8 @@ function App() {
     updateRowData("Central Area", 10);
   }, []);
 
+  const delaySearch = React.useCallback(debounce((val) => {updateRowData(val, limit)},1000), []);
+
   const updateRowData = (searchArea, limit) => {
     getData(searchArea, limit).then((res) => {
         setRowData(res);
@@ -129,6 +131,10 @@ function App() {
     setSearch(e.target.value);
   };
 
+  const handleFreeSearch = (value) => {
+    delaySearch(value)
+  }
+
   const renderAutoComplete = () => {
     
     let label = "Area";
@@ -137,6 +143,10 @@ function App() {
     if (searchType === "street") {
       label = "Street";
       options = street;
+    }
+
+    if (searchType === "custom") {
+      return <TextField style={{ flex: 1 }} label={label} placeholder={`Enter Search Term here`} onChange={(e, val) => handleFreeSearch(e.target.value)} />
     }
 
     return (
@@ -163,6 +173,7 @@ function App() {
         >
           <MenuItem value={"street"}>Street</MenuItem>
           <MenuItem value={"area"}>Area</MenuItem>
+          <MenuItem value={"custom"}>Custom</MenuItem>
         </Select>
         {renderAutoComplete()}
         <Select
