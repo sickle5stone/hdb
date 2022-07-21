@@ -10,7 +10,7 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import axios from "axios";
 import { Autocomplete, MenuItem, Select, TextField } from "@mui/material";
-import { areas } from "./constants/utils";
+import { areas, street } from "./constants/utils";
 import _, { update } from "lodash";
 
 const getData = async (area, limit) => {
@@ -44,11 +44,14 @@ const renderTable = (rowData) => {
 
   const renderRows = () => {
     return rowData.map((record) => {
-      const formatter = new Intl.NumberFormat('en-US', {
+      const formatter = new Intl.NumberFormat("en-US", {
         style: "currency",
-        currency: "SGD"
+        currency: "SGD",
       });
 
+      if (rowData.length < 1) {
+        return <TableCell>None Found.</TableCell>
+      }
 
       return (
         <TableRow
@@ -94,6 +97,7 @@ const renderTable = (rowData) => {
 function App() {
   const [rowData, setRowData] = React.useState([]);
   const [limit, setLimit] = React.useState(10);
+  const [searchType, setSearch] = React.useState("area");
 
   // React.useEffect(() => {
   //     if (rowData.length < 1){
@@ -105,13 +109,11 @@ function App() {
 
   React.useEffect(() => {
     updateRowData("Central Area", 10);
-  },[])
+  }, []);
 
   const updateRowData = (searchArea, limit) => {
     getData(searchArea, limit).then((res) => {
-      if (res.length > 0) {
         setRowData(res);
-      }
     });
   };
 
@@ -123,15 +125,46 @@ function App() {
     setLimit(e.target.value || 10);
   };
 
+  const handleSearchSelect = (e) => {
+    setSearch(e.target.value);
+  };
+
+  const renderAutoComplete = () => {
+    
+    let label = "Area";
+    let options = areas;
+    
+    if (searchType === "street") {
+      label = "Street";
+      options = street;
+    }
+
+    return (
+      <Autocomplete
+        style={{ flex: 1 }}
+        options={options}
+        renderInput={(params) => (
+          <TextField {...params} label={label} placeholder={`Enter ${label} here`} />
+        )}
+        onChange={handleChange}
+      ></Autocomplete>
+    );
+  };
+
   return (
     <div className="App">
       <div style={{ display: "flex", flexDirection: "row" }}>
-        <Autocomplete
-          style={{flex: 1}}
-          options={areas}
-          renderInput={(params) => <TextField {...params} label="Area" placeholder="Enter Area here"/>}
-          onChange={handleChange}
-        ></Autocomplete>
+        <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          value={searchType}
+          label="Type"
+          onChange={handleSearchSelect}
+        >
+          <MenuItem value={"street"}>Street</MenuItem>
+          <MenuItem value={"area"}>Area</MenuItem>
+        </Select>
+        {renderAutoComplete()}
         <Select
           labelId="demo-simple-select-label"
           id="demo-simple-select"
