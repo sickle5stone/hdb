@@ -11,11 +11,11 @@ import Paper from "@mui/material/Paper";
 import axios from "axios";
 import { Autocomplete, MenuItem, Select, TextField } from "@mui/material";
 import { areas } from "./constants/utils";
-import _ from "lodash";
+import _, { update } from "lodash";
 
 const getData = async (area, limit) => {
   const data = await axios.get(
-    `https://data.gov.sg/api/action/datastore_search?resource_id=f1765b54-a209-4718-8d38-a39237f502b3&q=${area}&limit=${limit}`
+    `https://data.gov.sg/api/action/datastore_search?resource_id=f1765b54-a209-4718-8d38-a39237f502b3&q=${area}&limit=${limit}&sort=month%20desc`
   );
 
   return data.data.result.records;
@@ -28,6 +28,7 @@ const renderTable = (rowData) => {
 
   const renderColumns = () => {
     const columns = [
+      "Txn Month",
       "Area",
       "Flat Type",
       "Floor Area (sqm)",
@@ -43,11 +44,20 @@ const renderTable = (rowData) => {
 
   const renderRows = () => {
     return rowData.map((record) => {
+      const formatter = new Intl.NumberFormat('en-US', {
+        style: "currency",
+        currency: "SGD"
+      });
+
+
       return (
         <TableRow
           key={record._id}
           sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
         >
+          <TableCell component="th" scope="row">
+            {record.month}
+          </TableCell>
           <TableCell component="th" scope="row">
             {record.town}
           </TableCell>
@@ -63,7 +73,7 @@ const renderTable = (rowData) => {
           <TableCell component="th" scope="row">
             {record.street_name}
           </TableCell>
-          <TableCell>{record.resale_price}</TableCell>
+          <TableCell>{formatter.format(record.resale_price)}</TableCell>
         </TableRow>
       );
     });
@@ -93,6 +103,10 @@ function App() {
   //     console.log(getData())
   //   }, [rowData]);
 
+  React.useEffect(() => {
+    updateRowData("Central Area", 10);
+  },[])
+
   const updateRowData = (searchArea, limit) => {
     getData(searchArea, limit).then((res) => {
       if (res.length > 0) {
@@ -113,9 +127,9 @@ function App() {
     <div className="App">
       <div style={{ display: "flex", flexDirection: "row" }}>
         <Autocomplete
-        style={{flex: 1}}
+          style={{flex: 1}}
           options={areas}
-          renderInput={(params) => <TextField {...params} label="Area" />}
+          renderInput={(params) => <TextField {...params} label="Area" placeholder="Enter Area here"/>}
           onChange={handleChange}
         ></Autocomplete>
         <Select
