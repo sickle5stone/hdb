@@ -9,13 +9,13 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import axios from "axios";
-import { Autocomplete, TextField } from "@mui/material";
+import { Autocomplete, MenuItem, Select, TextField } from "@mui/material";
 import { areas } from "./constants/utils";
 import _ from "lodash";
 
-const getData = async (area) => {
+const getData = async (area, limit) => {
   const data = await axios.get(
-    `https://data.gov.sg/api/action/datastore_search?resource_id=f1765b54-a209-4718-8d38-a39237f502b3&q=${area}&limit=5`
+    `https://data.gov.sg/api/action/datastore_search?resource_id=f1765b54-a209-4718-8d38-a39237f502b3&q=${area}&limit=${limit}`
   );
 
   return data.data.result.records;
@@ -27,7 +27,14 @@ const renderTable = (rowData) => {
   }
 
   const renderColumns = () => {
-    const columns = ["Area", "Flat Type", "Floor Area (sqm)", "Lease Remaining", "Street Name", "Price"];
+    const columns = [
+      "Area",
+      "Flat Type",
+      "Floor Area (sqm)",
+      "Lease Remaining",
+      "Street Name",
+      "Price",
+    ];
 
     return columns.map((column) => {
       return <TableCell>{column}</TableCell>;
@@ -57,7 +64,6 @@ const renderTable = (rowData) => {
             {record.street_name}
           </TableCell>
           <TableCell>{record.resale_price}</TableCell>
-          
         </TableRow>
       );
     });
@@ -77,6 +83,7 @@ const renderTable = (rowData) => {
 
 function App() {
   const [rowData, setRowData] = React.useState([]);
+  const [limit, setLimit] = React.useState(10);
 
   // React.useEffect(() => {
   //     if (rowData.length < 1){
@@ -85,27 +92,44 @@ function App() {
   //     console.log(rowData)
   //     console.log(getData())
   //   }, [rowData]);
-  
-  const updateRowData = (searchArea) => {
-    getData(searchArea).then((res) => {
+
+  const updateRowData = (searchArea, limit) => {
+    getData(searchArea, limit).then((res) => {
       if (res.length > 0) {
         setRowData(res);
       }
     });
-  }
-
+  };
 
   const handleChange = (e, val) => {
-    updateRowData(val);
+    updateRowData(val, limit);
+  };
+
+  const handleSelect = (e, val) => {
+    setLimit(e.target.value || 10);
   };
 
   return (
     <div className="App">
-      <Autocomplete
-        options={areas}
-        renderInput={(params) => <TextField {...params} label="Area" />}
-        onChange={handleChange}
-      ></Autocomplete>
+      <div style={{ display: "flex", flexDirection: "row" }}>
+        <Autocomplete
+        style={{flex: 1}}
+          options={areas}
+          renderInput={(params) => <TextField {...params} label="Area" />}
+          onChange={handleChange}
+        ></Autocomplete>
+        <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          value={limit}
+          label="Limit"
+          onChange={handleSelect}
+        >
+          <MenuItem value={10}>10</MenuItem>
+          <MenuItem value={50}>50</MenuItem>
+          <MenuItem value={100}>100</MenuItem>
+        </Select>
+      </div>
       {renderTable(rowData)}
     </div>
   );
